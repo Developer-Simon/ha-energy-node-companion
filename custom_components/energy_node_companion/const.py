@@ -30,6 +30,12 @@ PANEL_ALL = "all"
 PANEL_ADMINS = "admins"
 PANEL_OFF = "off"
 PANEL_MODES = (PANEL_ALL, PANEL_ADMINS, PANEL_OFF)
+# Name und Symbol des Panels in der Seitenleiste, frei waehlbar.
+CONF_PANEL_TITLE = "panel_title"
+CONF_PANEL_ICON = "panel_icon"
+# Verlaeufe an das Dashboard liefern. Mindestens Verlaeufe oder Panel muss an
+# sein, sonst tut der Eintrag nichts.
+CONF_HISTORY = "history"
 
 # Cookie, mit dem der Browser dem Proxy zeigt, dass ein HA-Benutzer das Panel
 # geoeffnet hat. Gilt nur unter dem Proxy-Pfad des Eintrags.
@@ -41,7 +47,7 @@ PANEL_ELEMENT = "energy-node-panel"
 PANEL_TITLE = "Energy Node"
 PANEL_ICON = "mdi:solar-power-variant"
 # Bei jeder Aenderung an www/energy-node-panel.js hochzaehlen (Cache-Bust).
-PANEL_JS_VERSION = 1
+PANEL_JS_VERSION = 2
 STATIC_URL = "/energy_node_static"
 
 
@@ -53,3 +59,34 @@ def proxy_prefix(entry_id: str) -> str:
 def panel_url_path(entry_id: str) -> str:
     """URL des Panels in der Seitenleiste, stabil fuer einen Eintrag."""
     return f"energy-node-{entry_id[-8:].lower()}"
+
+# Energiestatistik (Spec 2026-10-11-energiestatistik, Abschnitt 2). Die
+# Stufe 1h fuehrt Stundenmittel in W (zahlenmaessig Wh), das Raster zaehlt
+# abgeschlossene Stunden je UTC-Tag. Muss rasterFor("1h") im Dashboard
+# spiegeln.
+PEER_KIND = "companion"
+STATS_TIER = "1h"
+HOUR_MS = 3_600_000
+DAY_MS = 86_400_000
+STATS_WINDOW_DAYS = 3650
+CONF_STATS = "stats"
+COUNTER_PREFIX = "counter_"
+STATS_ROLES = (
+    "pv", "grid_import", "grid_export", "battery_charge", "battery_discharge", "load_total", "wallbox", "heat_pump",
+)
+# Rolle -> unique_id des Sensors, den das Dashboard per Discovery anmeldet
+# (energydiscovery.go). wallbox und heat_pump haben keinen und werden nur
+# mit Zaehler geliefert.
+STATS_DISCOVERY = {
+    "pv": "energy_node_pv_power",
+    "grid_import": "energy_node_grid_import",
+    "grid_export": "energy_node_grid_export",
+    "battery_charge": "energy_node_battery_charge",
+    "battery_discharge": "energy_node_battery_discharge",
+    "load_total": "energy_node_house_load",
+}
+
+
+def counter_key(role: str) -> str:
+    """Optionsschluessel des Zaehlers einer Rolle."""
+    return f"{COUNTER_PREFIX}{role}"
