@@ -59,3 +59,39 @@ def proxy_prefix(entry_id: str) -> str:
 def panel_url_path(entry_id: str) -> str:
     """URL des Panels in der Seitenleiste, stabil fuer einen Eintrag."""
     return f"energy-node-{entry_id[-8:].lower()}"
+
+# Energiestatistik (Spec 2026-10-11-energiestatistik, Abschnitt 2). Die
+# Stufe 1h fuehrt Stundenmittel in W (zahlenmaessig Wh), das Raster zaehlt
+# abgeschlossene Stunden je UTC-Tag. Muss rasterFor("1h") im Dashboard
+# spiegeln.
+PEER_KIND = "companion"
+STATS_TIER = "1h"
+HOUR_MS = 3_600_000
+DAY_MS = 86_400_000
+STATS_WINDOW_DAYS = 3650
+CONF_STATS = "stats"
+COUNTER_PREFIX = "counter_"
+STATS_ROLES = (
+    "pv", "grid_import", "grid_export", "battery_charge", "battery_discharge", "load_total", "wallbox", "heat_pump",
+)
+# Rolle -> unique_id des Sensors, den das Dashboard per Discovery anmeldet
+# (energydiscovery.go). Ohne Zaehler liefert Home Assistant nur die Rollen
+# aus diesem Eintrag.
+STATS_DISCOVERY = {
+    "pv": "energy_node_pv_power",
+    "grid_import": "energy_node_grid_import",
+    "grid_export": "energy_node_grid_export",
+    "battery_charge": "energy_node_battery_charge",
+    "battery_discharge": "energy_node_battery_discharge",
+    "load_total": "energy_node_house_load",
+    "wallbox": "energy_node_wallbox",
+    "heat_pump": "energy_node_heat_pump",
+}
+# Verbrauchskategorien melden ihren Sensor als energy_node_custom_<id>.
+# Die Energiestatistik bietet jede solche Entitaet als Rolle custom:<id> an.
+CUSTOM_UNIQUE_PREFIX = "energy_node_custom_"
+
+
+def counter_key(role: str) -> str:
+    """Optionsschluessel des Zaehlers einer Rolle."""
+    return f"{COUNTER_PREFIX}{role}"
